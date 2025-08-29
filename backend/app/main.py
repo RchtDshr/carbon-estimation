@@ -1,5 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
+from app.api import estimate,estimate_image
 
 app = FastAPI(title="Carbon Footprint API")
 
@@ -27,3 +28,10 @@ async def test_endpoint():
         "data": "This is test data from the backend",
         "timestamp": "Updated!"
     }
+    
+api_router = APIRouter()
+api_router.include_router(estimate.router)
+api_router.include_router(estimate_image.router)
+
+# Register once
+app.include_router(api_router)
