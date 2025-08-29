@@ -55,6 +55,8 @@ class ApiClient {
 
 export const api = new ApiClient();
 
-// Example API calls
+// API calls
 export const healthCheck = () => api.get('/health');
 export const testBackend = () => api.get('/api/test');
+export const estimateCarbonFootprint = (dishName: string) => 
+  api.post('/estimate', { dish: dishName });
