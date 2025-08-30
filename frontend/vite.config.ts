@@ -18,5 +18,9 @@ export default defineConfig({
     watch: {
       usePolling: true, // ensures hot reload works in Docker volumes
     },
+    allowedHosts: [
+      'localhost',
+      '.onrender.com'
+    ],
   },
 })
