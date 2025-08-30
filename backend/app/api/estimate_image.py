@@ -27,8 +27,16 @@ async def estimate_from_image(
         print(f"Identified dish from image: {dish_name}")
 
         # 2. Call LLM to get JSON estimate for carbon footprint
-        result = await estimate_carbon_from_dish(dish_name)
-        print(f"Carbon estimate result: {result}")
+        print(f"🤖 About to call LLM for dish: {dish_name}")
+        try:
+            result = await estimate_carbon_from_dish(dish_name)
+            print(f"✅ Carbon estimate result: {result}")
+        except Exception as llm_error:
+            print(f"❌ LLM Error: {str(llm_error)}")
+            print(f"❌ LLM Error type: {type(llm_error)}")
+            import traceback
+            traceback.print_exc()
+            raise HTTPException(status_code=500, detail=f"LLM service error: {str(llm_error)}")
         
         return result
 
