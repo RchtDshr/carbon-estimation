@@ -5,8 +5,6 @@ from openai import OpenAI
 
 # Get the API key and print it for debugging
 api_key = os.getenv("OPENAI_API_KEY")
-print(f"OpenAI API Key present: {bool(api_key)}")
-print(f"API Key starts with: {api_key[:10] if api_key else 'None'}...")
 
 client = OpenAI(api_key=api_key)
 
