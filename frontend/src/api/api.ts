@@ -51,6 +51,25 @@ class ApiClient {
       throw error;
     }
   }
+
+  async postFile(endpoint: string, file: File) {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await fetch(`${this.baseURL}${endpoint}`, {
+        method: 'POST',
+        body: formData,
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('API POST FILE error:', error);
+      throw error;
+    }
+  }
 }
 
 export const api = new ApiClient();
@@ -60,3 +79,5 @@ export const healthCheck = () => api.get('/health');
 export const testBackend = () => api.get('/api/test');
 export const estimateCarbonFootprint = (dishName: string) => 
   api.post('/estimate', { dish: dishName });
+export const estimateCarbonFootprintFromImage = (file: File) => 
+  api.postFile('/estimate/image', file);

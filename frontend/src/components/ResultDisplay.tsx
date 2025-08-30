@@ -1,23 +1,17 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Button } from './ui/button';
 import { Skeleton } from './ui/skeleton';
-import { AlertCircle, Leaf, TrendingUp, Info, Loader2 } from 'lucide-react';
-
-interface CarbonFootprintResult {
-  dish: string;
-  estimated_carbon_kg: number;
-  ingredients: Array<{
-    name: string;
-    carbon_kg: number;
-  }>;
-}
+import { AlertCircle, Leaf, TrendingUp, Loader2, RotateCcw } from 'lucide-react';
+import type { CarbonFootprintResult } from '../types';
 
 interface ResultDisplayProps {
   result: CarbonFootprintResult | null;
   error: string | null;
   isLoading?: boolean;
+  onReset?: () => void;
 }
 
-export default function ResultDisplay({ result, error, isLoading = false }: ResultDisplayProps) {
+export default function ResultDisplay({ result, error, isLoading = false, onReset }: ResultDisplayProps) {
   // Loading state
   if (isLoading) {
     return (
@@ -62,22 +56,9 @@ export default function ResultDisplay({ result, error, isLoading = false }: Resu
     );
   }
 
+  // If no result and not loading, don't render anything (handled by parent)
   if (!result) {
-    return (
-      <Card className="w-full max-w-md mx-auto border-gray-200 bg-gray-50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-gray-600">
-            <Info className="h-5 w-5" />
-            No Results Yet
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-gray-500 text-sm">
-            Enter a dish name above to see its estimated carbon footprint.
-          </p>
-        </CardContent>
-      </Card>
-    );
+    return null;
   }
 
   const getCarbonFootprintLevel = (carbonKg: number) => {
@@ -126,6 +107,20 @@ export default function ResultDisplay({ result, error, isLoading = false }: Resu
                 </div>
               ))}
             </div>
+          </div>
+        )}
+        
+        {onReset && (
+          <div className="pt-4 border-t border-gray-200">
+            <Button 
+              onClick={onReset}
+              variant="outline" 
+              size="sm"
+              className="w-full text-gray-600 hover:text-gray-800"
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Try Another Dish
+            </Button>
           </div>
         )}
       </CardContent>
