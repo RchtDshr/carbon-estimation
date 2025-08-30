@@ -7,7 +7,13 @@ app = FastAPI(title="Carbon Footprint API")
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://frontend:5173"],  # Frontend URLs
+    allow_origins=[
+        "http://localhost:5173",  # Vite dev server
+        "http://localhost:3000",  # Alternative dev port
+        "http://frontend:5173",   # Docker frontend
+        "https://carbon-estimation-frontend.onrender.com",  # Your specific frontend URL
+        "https://*.onrender.com", # Render deployments (wildcard)
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
