@@ -40,17 +40,74 @@ export default function ResultDisplay({ result, error, isLoading = false, onRese
     );
   }
 
+  // Error state with enhanced messaging
   if (error) {
+    const getErrorInfo = (errorMessage: string) => {
+      const message = errorMessage.toLowerCase();
+      
+      if (message.includes('does not appear to be food-related') || 
+          message.includes('input does not appear to be food-related') ||
+          message.includes('not food') ||
+          message.includes('food-related')) {
+        return {
+          title: 'Not a Food Item',
+          description: 'Please enter a food or dish name.',
+          suggestion: 'Try something like "Pizza", "Chicken Curry", or "Caesar Salad".'
+        };
+      }
+      
+      if (message.includes('does not contain food') || 
+          message.includes('this image does not contain food') ||
+          message.includes('image not recognized') ||
+          message.includes('not food')) {
+        return {
+          title: 'Not a Food Image',
+          description: 'The uploaded image doesn\'t show food.',
+          suggestion: 'Please upload a clear image of a dish or meal.'
+        };
+      }
+      
+      if (message.includes('network') || message.includes('fetch')) {
+        return {
+          title: 'Connection Error',
+          description: 'Unable to connect to the server.',
+          suggestion: 'Please check your internet connection and try again.'
+        };
+      }
+      
+      return {
+        title: 'Estimation Error',
+        description: errorMessage,
+        suggestion: 'Please try again with a different input.'
+      };
+    };
+
+    const errorInfo = getErrorInfo(error);
+
     return (
       <Card className="w-full max-w-md mx-auto border-red-200 bg-red-50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-red-700">
             <AlertCircle className="h-5 w-5" />
-            Error
+            {errorInfo.title}
           </CardTitle>
+          <CardDescription className="text-red-600">
+            {errorInfo.description}
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-red-600 text-sm">{error}</p>
+          <p className="text-red-600 text-sm mb-4">{errorInfo.suggestion}</p>
+          {onReset && (
+            <Button 
+              onClick={onReset} 
+              variant="outline" 
+              size="sm"
+              className="border-red-300 text-red-700 hover:bg-red-100"
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Try Again
+            </Button>
+          )}
         </CardContent>
       </Card>
     );

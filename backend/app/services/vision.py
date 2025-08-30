@@ -21,12 +21,16 @@ async def analyze_food_image(source: Union[UploadFile, str]) -> str:
         The identified dish name as a string.
     """
     
-    # Create the prompt for food identification
+    # Create the prompt for food identification with validation
     prompt = """
-    Analyze this food image and identify the main dish. 
-    Return only the name of the dish (e.g., "Chicken Biryani", "Pizza Margherita", "Caesar Salad").
+    Analyze this image carefully.
+    
+    If this image contains food/dish/meal, respond with only the name of the dish (e.g., "Chicken Biryani", "Pizza Margherita", "Caesar Salad").
     Be specific about the type of dish if you can identify it clearly.
     If you see multiple dishes, identify the main/primary dish.
+    
+    If this image does NOT contain food (like random objects, people, animals, landscapes, text, etc.), respond with exactly:
+    "ERROR: This image does not contain food. Please upload a clear image of a dish or meal."
     """
 
     try:
@@ -70,10 +74,21 @@ async def analyze_food_image(source: Union[UploadFile, str]) -> str:
         )
         
         dish_name = response.choices[0].message.content.strip()
-        print(f"🍽️ Identified dish: {dish_name}")
+        print(f"🍽️ Vision API response: {dish_name}")
         
+        # Check if the image was identified as non-food
+        if dish_name.startswith("ERROR:"):
+            error_message = dish_name.replace("ERROR:", "").strip()
+            print(f"🚫 Non-food image detected: {error_message}")
+            raise ValueError(error_message)
+        
+        print(f"✅ Identified dish: {dish_name}")
         return dish_name
         
+    except ValueError as e:
+        # Re-raise ValueError exceptions (validation errors) as-is
+        print(f"❌ Validation error in vision analysis: {str(e)}")
+        raise e
     except Exception as e:
         print(f"❌ Error in vision analysis: {str(e)}")
         raise Exception(f"Failed to analyze food image: {str(e)}")

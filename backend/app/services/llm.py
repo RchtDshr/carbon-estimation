@@ -18,17 +18,29 @@ async def estimate_carbon_from_dish(dish: str) -> dict:
     print(f"🤖 Starting LLM estimation for dish: {dish}")
     
     prompt = f"""
-    You are a carbon footprint estimation assistant.
-    Given a dish name, output a JSON object with the format:
+    You are a carbon footprint estimation assistant. Please respond with a JSON object.
+    
+    IMPORTANT: First, determine if the input "{dish}" is food/dish related.
+    
+    If the input is NOT food-related (like random text, objects, people, places, etc.), respond with this JSON format:
     {{
-      "dish": "<dish name>",
+      "dish": "{dish}",
+      "estimated_carbon_kg": -1,
+      "ingredients": [],
+      "error": "Input does not appear to be food-related. Please enter a food item or dish name."
+    }}
+    
+    If the input IS food-related, provide a normal carbon footprint estimation in this JSON format:
+    {{
+      "dish": "<actual dish name>",
       "estimated_carbon_kg": <float>,
       "ingredients": [
         {{ "name": "<ingredient>", "carbon_kg": <float> }},
         ...
       ]
     }}
-    Dish: {dish}
+    
+    Input: {dish}
     """
 
     try:
@@ -49,6 +61,17 @@ async def estimate_carbon_from_dish(dish: str) -> dict:
         print("✅ OpenAI API call successful")
         result = json.loads(response.choices[0].message.content)
         print(f"📊 LLM Result: {result}")
+        
+        # Check if the result indicates non-food input
+        if result.get("estimated_carbon_kg") == -1 and "error" in result:
+            error_message = result.get("error", "Input does not appear to be food-related")
+            print(f"🚫 Non-food input detected: {error_message}")
+            raise ValueError(error_message)
+        
+        # Remove the error field from successful responses
+        if "error" in result:
+            result.pop("error")
+        
         return result
         
     except Exception as e:

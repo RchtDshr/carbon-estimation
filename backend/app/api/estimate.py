@@ -28,5 +28,8 @@ async def estimate_carbon(request: EstimateRequest):
         print(f"Cached result for dish: {dish_name}")
         
         return result
+    except ValueError as e:
+        # Handle validation errors (non-food input)
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")

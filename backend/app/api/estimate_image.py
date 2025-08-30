@@ -41,6 +41,11 @@ async def estimate_from_image(
         try:
             result = await estimate_carbon_from_dish(dish_name)
             print(f"Carbon estimate result: {result}")
+        except ValueError as llm_error:
+            # Handle non-food validation from LLM - this means the vision identified something non-food
+            print(f"LLM detected non-food item from image analysis: {str(llm_error)}")
+            # Return a more appropriate error message for images
+            raise HTTPException(status_code=400, detail="This image does not contain food. Please upload a clear image of a dish or meal.")
         except Exception as llm_error:
             print(f"LLM Error: {str(llm_error)}")
             print(f"LLM Error type: {type(llm_error)}")
@@ -52,6 +57,13 @@ async def estimate_from_image(
         
         return result
 
+    except ValueError as e:
+        # Handle validation errors (non-food input/image)
+        print(f"Validation Error in estimate_from_image: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
     except Exception as e:
         print(f"Error in estimate_from_image: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
