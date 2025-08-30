@@ -2,6 +2,7 @@ from fastapi import APIRouter, UploadFile, File, HTTPException, Form
 from schemas import DishEstimateResponse
 from app.services.vision import analyze_food_image
 from app.services.llm import estimate_carbon_from_dish
+from app.services.cache import cache_service
 from typing import Optional
 
 router = APIRouter(tags=["estimate"])
@@ -26,17 +27,28 @@ async def estimate_from_image(
             
         print(f"Identified dish from image: {dish_name}")
 
-        # 2. Call LLM to get JSON estimate for carbon footprint
-        print(f"🤖 About to call LLM for dish: {dish_name}")
+        # 2. Check cache first using the identified dish name
+        cached_result = await cache_service.get_cached_result(dish_name)
+        if cached_result:
+            print(f"Cache hit for dish (from image): {dish_name}")
+            # Remove cache metadata before returning
+            result = {k: v for k, v in cached_result.items() if k not in ['cached_at', 'cache_key']}
+            return result
+        
+        print(f"Cache miss for dish (from image): {dish_name} - calling LLM")
+
+        # 3. Call LLM to get JSON estimate for carbon footprint
         try:
             result = await estimate_carbon_from_dish(dish_name)
-            print(f"✅ Carbon estimate result: {result}")
+            print(f"Carbon estimate result: {result}")
         except Exception as llm_error:
-            print(f"❌ LLM Error: {str(llm_error)}")
-            print(f"❌ LLM Error type: {type(llm_error)}")
-            import traceback
-            traceback.print_exc()
-            raise HTTPException(status_code=500, detail=f"LLM service error: {str(llm_error)}")
+            print(f"LLM Error: {str(llm_error)}")
+            print(f"LLM Error type: {type(llm_error)}")
+            raise HTTPException(status_code=500, detail=f"LLM Error: {str(llm_error)}")
+        
+        # 4. Cache the result for future use
+        await cache_service.cache_result(dish_name, result)
+        print(f"Cached result for dish (from image): {dish_name}")
         
         return result
 

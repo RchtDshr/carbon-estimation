@@ -32,7 +32,8 @@ class CacheService:
         normalized_dish = dish_name.lower().strip()
         # Create a hash to handle special characters and ensure consistent key format
         dish_hash = hashlib.md5(normalized_dish.encode()).hexdigest()
-        return f"carbon_footprint:{estimation_type}:{dish_hash}:{normalized_dish}"
+        # Remove estimation_type from cache key so both text and image use same cache
+        return f"carbon_footprint:{dish_hash}:{normalized_dish}"
     
     async def get_cached_result(self, dish_name: str, estimation_type: str = "text") -> Optional[Dict[Any, Any]]:
         """Get cached carbon footprint result for a dish"""
