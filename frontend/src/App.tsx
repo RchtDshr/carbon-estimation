@@ -15,7 +15,6 @@ function App() {
     result: textResult,
     error: textError,
     isLoading: textIsLoading,
-    hasStartedEstimation: textHasStarted,
     handleEstimate: handleTextEstimate,
     handleReset: handleTextReset
   } = useDishEstimation();
@@ -25,13 +24,12 @@ function App() {
     result: imageResult,
     error: imageError,
     isLoading: imageIsLoading,
-    hasStartedEstimation: imageHasStarted,
     handleImageEstimate,
     handleReset: handleImageReset
   } = useImageEstimation();
 
-  // Show sample dishes only if neither estimation has started
-  const showSampleDishes = !textHasStarted && !imageHasStarted;
+  // Show sample dishes only if no results are present
+  const showSampleDishes = !textResult && !imageResult && !textError && !imageError;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 dark:from-gray-900 dark:to-green-900">
@@ -44,13 +42,11 @@ function App() {
           textResult={textResult}
           textError={textError}
           textIsLoading={textIsLoading}
-          textHasStarted={textHasStarted}
           onTextEstimate={handleTextEstimate}
           onTextReset={handleTextReset}
           imageResult={imageResult}
           imageError={imageError}
           imageIsLoading={imageIsLoading}
-          imageHasStarted={imageHasStarted}
           onImageEstimate={handleImageEstimate}
           onImageReset={handleImageReset}
         />

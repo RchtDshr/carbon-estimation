@@ -12,5 +12,5 @@ export const SAMPLE_DISHES = [
 export const APP_CONFIG = {
   title: 'Carbon Footprint Estimator',
   subtitle: 'Estimate Your Dish\'s Environmental Impact',
-  description: 'Get instant carbon footprint estimates for your favorite dishes using text input or image upload. Make more sustainable food choices with AI-powered analysis.'
+  description: 'Get instant carbon footprint estimates by typing dish names or uploading food images. Compare results from both input methods with AI-powered analysis.'
 } as const;

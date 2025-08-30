@@ -13,7 +13,7 @@ export default function SampleDishes({ onDishSelect, isLoading, show }: SampleDi
     <div className="mt-12 max-w-4xl mx-auto">
       <div className="text-center mb-6">
         <h3 className="text-xl font-semibold text-gray-900 mb-2">Try These Popular Dishes</h3>
-        <p className="text-gray-600">Click on any dish to see its carbon footprint</p>
+        <p className="text-gray-600">Click on any dish to see its carbon footprint using text analysis</p>
       </div>
       <div className="flex flex-wrap justify-center gap-3">
         {SAMPLE_DISHES.map((dish) => (

@@ -1,9 +1,6 @@
-import { useState } from 'react';
-import { Button } from '../ui/button';
 import DishInput from '../DishInput';
 import ImageInput from '../ImageInput';
 import ResultDisplay from '../ResultDisplay';
-import { Type, Camera } from 'lucide-react';
 import type { CarbonFootprintResult } from '../../types';
 
 interface EstimationSectionProps {
@@ -11,7 +8,6 @@ interface EstimationSectionProps {
   textResult: CarbonFootprintResult | null;
   textError: string | null;
   textIsLoading: boolean;
-  textHasStarted: boolean;
   onTextEstimate: (dishName: string) => Promise<void>;
   onTextReset: () => void;
   
@@ -19,98 +15,128 @@ interface EstimationSectionProps {
   imageResult: CarbonFootprintResult | null;
   imageError: string | null;
   imageIsLoading: boolean;
-  imageHasStarted: boolean;
   onImageEstimate: (file: File) => Promise<void>;
   onImageReset: () => void;
 }
-
-type EstimationMode = 'text' | 'image';
 
 export default function EstimationSection({
   textResult,
   textError,
   textIsLoading,
-  textHasStarted,
   onTextEstimate,
   onTextReset,
   imageResult,
   imageError,
   imageIsLoading,
-  imageHasStarted,
   onImageEstimate,
   onImageReset
 }: EstimationSectionProps) {
-  const [mode, setMode] = useState<EstimationMode>('text');
+  // Determine which result to show based on loading states and results
+  // Show image result if image is loading or has result/error
+  // Show text result if text is loading or has result/error and image is not active
+  const imageActive = imageIsLoading || imageResult || imageError;
+  const textActive = textIsLoading || textResult || textError;
+  
+  // Prioritize whichever is currently loading, then most recent result
+  let currentResult: CarbonFootprintResult | null = null;
+  let currentError: string | null = null;
+  let currentIsLoading: boolean = false;
+  let currentReset: () => void = onTextReset;
+  let resultSource: 'text' | 'image' = 'text';
 
-  const currentResult = mode === 'text' ? textResult : imageResult;
-  const currentError = mode === 'text' ? textError : imageError;
-  const currentIsLoading = mode === 'text' ? textIsLoading : imageIsLoading;
-  const currentHasStarted = mode === 'text' ? textHasStarted : imageHasStarted;
-  const currentReset = mode === 'text' ? onTextReset : onImageReset;
+  if (imageIsLoading) {
+    // Image is currently loading - show image state
+    currentResult = imageResult;
+    currentError = imageError;
+    currentIsLoading = imageIsLoading;
+    currentReset = onImageReset;
+    resultSource = 'image';
+  } else if (textIsLoading) {
+    // Text is currently loading - show text state
+    currentResult = textResult;
+    currentError = textError;
+    currentIsLoading = textIsLoading;
+    currentReset = onTextReset;
+    resultSource = 'text';
+  } else if (imageActive) {
+    // Image has result/error and is not loading - show image
+    currentResult = imageResult;
+    currentError = imageError;
+    currentIsLoading = imageIsLoading;
+    currentReset = onImageReset;
+    resultSource = 'image';
+  } else if (textActive) {
+    // Text has result/error and is not loading - show text
+    currentResult = textResult;
+    currentError = textError;
+    currentIsLoading = textIsLoading;
+    currentReset = onTextReset;
+    resultSource = 'text';
+  }
 
-  const handleModeChange = (newMode: EstimationMode) => {
-    setMode(newMode);
-    // Reset both modes when switching
-    onTextReset();
-    onImageReset();
-  };
+  const showResult = imageActive || textActive;
 
   return (
-    <div className="max-w-4xl mx-auto">
-      {/* Mode Selection Tabs */}
-      <div className="flex justify-center mb-8">
-        <div className="bg-white/50 backdrop-blur-sm rounded-lg p-1 border border-green-200">
-          <Button
-            variant={mode === 'text' ? 'default' : 'ghost'}
-            onClick={() => handleModeChange('text')}
-            className={`flex items-center gap-2 ${
-              mode === 'text' 
-                ? 'bg-green-600 text-white shadow-sm' 
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-            disabled={textIsLoading || imageIsLoading}
-          >
-            <Type className="h-4 w-4" />
-            Text Input
-          </Button>
-          <Button
-            variant={mode === 'image' ? 'default' : 'ghost'}
-            onClick={() => handleModeChange('image')}
-            className={`flex items-center gap-2 ${
-              mode === 'image' 
-                ? 'bg-blue-600 text-white shadow-sm' 
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-            disabled={textIsLoading || imageIsLoading}
-          >
-            <Camera className="h-4 w-4" />
-            Image Upload
-          </Button>
-        </div>
+    <div className="max-w-6xl mx-auto">
+      {/* Section Title */}
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-3">Choose Your Analysis Method</h2>
+        <p className="text-gray-600">Use either method independently or try both to compare results!</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 items-start">
-        {/* Input Section */}
+      {/* Input Components Side by Side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 relative">
+        {/* Text Input */}
         <div className="space-y-4">
-          {mode === 'text' ? (
-            <DishInput onEstimate={onTextEstimate} isLoading={textIsLoading} />
-          ) : (
-            <ImageInput onImageEstimate={onImageEstimate} isLoading={imageIsLoading} />
-          )}
+          <div className="text-center mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">📝 Text Input Method</h3>
+            <p className="text-sm text-gray-600">Type the name of any dish</p>
+          </div>
+          <DishInput onEstimate={onTextEstimate} isLoading={textIsLoading} />
         </div>
 
-        {/* Result Section - Only show after user has started an estimation */}
-        {currentHasStarted && (
-          <div className="space-y-4">
-            <ResultDisplay 
-              result={currentResult} 
-              error={currentError} 
-              isLoading={currentIsLoading} 
-              onReset={currentReset}
-            />
+        {/* Vertical Separator for large screens */}
+        <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-gray-300 to-transparent transform -translate-x-1/2"></div>
+        
+        {/* OR text for mobile */}
+        <div className="lg:hidden flex items-center justify-center py-4">
+          <div className="bg-white px-4 py-2 rounded-full border border-gray-200 text-sm text-gray-500 font-medium">
+            OR
           </div>
-        )}
+        </div>
+
+        {/* Image Input */}
+        <div className="space-y-4">
+          <div className="text-center mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">📸 Image Upload Method</h3>
+            <p className="text-sm text-gray-600">Upload a photo of your dish</p>
+          </div>
+          <ImageInput onImageEstimate={onImageEstimate} isLoading={imageIsLoading} />
+        </div>
       </div>
+
+      {/* Single Unified Result Section */}
+      {showResult && (
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              {resultSource === 'text' ? '📝 Text Analysis Result' : '📸 Image Analysis Result'}
+            </h3>
+            <p className="text-sm text-gray-600">
+              {resultSource === 'text' 
+                ? 'Result from text input analysis' 
+                : 'Result from image upload analysis'
+              }
+            </p>
+          </div>
+          <ResultDisplay 
+            result={currentResult} 
+            error={currentError} 
+            isLoading={currentIsLoading} 
+            onReset={currentReset}
+          />
+        </div>
+      )}
     </div>
   );
 }

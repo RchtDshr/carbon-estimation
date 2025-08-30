@@ -2,22 +2,22 @@ export default function InfoSection() {
   const steps = [
     {
       number: 1,
-      title: 'Choose Input Method',
-      description: 'Type dish name or upload an image of the dish',
+      title: 'Choose Your Method',
+      description: 'Type dish names on the left or upload images on the right - use both simultaneously!',
       bgColor: 'bg-green-100',
       textColor: 'text-green-600'
     },
     {
       number: 2,
       title: 'AI Analysis',
-      description: 'Our AI analyzes ingredients and cooking methods',
+      description: 'Our AI analyzes text descriptions and visual ingredients independently',
       bgColor: 'bg-blue-100',
       textColor: 'text-blue-600'
     },
     {
       number: 3,
-      title: 'Get Results',
-      description: 'Receive detailed carbon footprint estimate with ingredient breakdown',
+      title: 'Compare Results',
+      description: 'Get detailed carbon footprint estimates and compare accuracy between methods',
       bgColor: 'bg-purple-100',
       textColor: 'text-purple-600'
     }
