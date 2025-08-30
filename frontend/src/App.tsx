@@ -1,6 +1,7 @@
 import './App.css';
 import { useDishEstimation } from './hooks/useDishEstimation';
 import { useImageEstimation } from './hooks/useImageEstimation';
+import { useState } from 'react';
 import {
   Header,
   HeroSection,
@@ -12,12 +13,15 @@ import ResultDisplay from './components/ResultDisplay';
 import type { CarbonFootprintResult } from './types';
 
 function App() {
+  // Track which method was used most recently
+  const [lastUsedMethod, setLastUsedMethod] = useState<'text' | 'image' | null>(null);
+  
   // Text estimation hook
   const {
     result: textResult,
     error: textError,
     isLoading: textIsLoading,
-    handleEstimate: handleTextEstimate,
+    handleEstimate: originalHandleTextEstimate,
     handleReset: handleTextReset
   } = useDishEstimation();
 
@@ -26,22 +30,47 @@ function App() {
     result: imageResult,
     error: imageError,
     isLoading: imageIsLoading,
-    handleImageEstimate,
+    handleImageEstimate: originalHandleImageEstimate,
     handleReset: handleImageReset
   } = useImageEstimation();
 
-  // Show sample dishes only if no results are present
-  const showSampleDishes = !textResult && !imageResult && !textError && !imageError;
+  // Wrap the estimate functions to track which was used last
+  const handleTextEstimate = async (dishName: string) => {
+    setLastUsedMethod('text');
+    await originalHandleTextEstimate(dishName);
+  };
+
+  const handleImageEstimate = async (file: File) => {
+    setLastUsedMethod('image');
+    await originalHandleImageEstimate(file);
+  };
 
   // Result coordination logic - determine which result to show
   const imageActive = imageIsLoading || imageResult || imageError;
   const textActive = textIsLoading || textResult || textError;
   
-  // Prioritize whichever is currently loading, then most recent result
+  // Create combined reset function that also clears the last used method
+  const handleCombinedReset = () => {
+    setLastUsedMethod(null);
+    if (lastUsedMethod === 'text') {
+      handleTextReset();
+    } else if (lastUsedMethod === 'image') {
+      handleImageReset();
+    } else {
+      // Reset both if unsure
+      handleTextReset();
+      handleImageReset();
+    }
+  };
+  
+  // Show sample dishes only if no results are present
+  const showSampleDishes = !textResult && !imageResult && !textError && !imageError;
+
+  // Prioritize whichever is currently loading, then the most recently used method
   let currentResult: CarbonFootprintResult | null = null;
   let currentError: string | null = null;
   let currentIsLoading: boolean = false;
-  let currentReset: () => void = handleTextReset;
+  let currentReset: () => void = handleCombinedReset;
   let resultSource: 'text' | 'image' = 'text';
 
   if (imageIsLoading) {
@@ -49,29 +78,43 @@ function App() {
     currentResult = imageResult;
     currentError = imageError;
     currentIsLoading = imageIsLoading;
-    currentReset = handleImageReset;
+    currentReset = handleCombinedReset;
     resultSource = 'image';
   } else if (textIsLoading) {
     // Text is currently loading - show text state
     currentResult = textResult;
     currentError = textError;
     currentIsLoading = textIsLoading;
-    currentReset = handleTextReset;
+    currentReset = handleCombinedReset;
     resultSource = 'text';
-  } else if (imageActive) {
-    // Image has result/error and is not loading - show image
-    currentResult = imageResult;
-    currentError = imageError;
-    currentIsLoading = imageIsLoading;
-    currentReset = handleImageReset;
-    resultSource = 'image';
-  } else if (textActive) {
-    // Text has result/error and is not loading - show text
+  } else if (lastUsedMethod === 'text' && textActive) {
+    // Text was used most recently and has result/error - show text
     currentResult = textResult;
     currentError = textError;
     currentIsLoading = textIsLoading;
-    currentReset = handleTextReset;
+    currentReset = handleCombinedReset;
     resultSource = 'text';
+  } else if (lastUsedMethod === 'image' && imageActive) {
+    // Image was used most recently and has result/error - show image
+    currentResult = imageResult;
+    currentError = imageError;
+    currentIsLoading = imageIsLoading;
+    currentReset = handleCombinedReset;
+    resultSource = 'image';
+  } else if (textActive) {
+    // Fallback to text if it has results
+    currentResult = textResult;
+    currentError = textError;
+    currentIsLoading = textIsLoading;
+    currentReset = handleCombinedReset;
+    resultSource = 'text';
+  } else if (imageActive) {
+    // Fallback to image if it has results
+    currentResult = imageResult;
+    currentError = imageError;
+    currentIsLoading = imageIsLoading;
+    currentReset = handleCombinedReset;
+    resultSource = 'image';
   }
 
   const showResult = imageActive || textActive;
